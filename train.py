@@ -2,6 +2,8 @@ import os
 import cv2
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+
 from tqdm import tqdm
 from options.options import options
 from dataloaders.seg_dataloader import Dataset
@@ -16,6 +18,8 @@ iter_num, n_classes = len(trn_dl), opt.oc
 trainer = Segmentation_Trainer(opt, iter_num)
 epoch_num = get_total_epoch(opt.epoch)
 
+writer = SummaryWriter()
+
 save_cnt = 0
 for epoch in range(epoch_num):
 	for i, data in enumerate(tqdm(trn_dl)):
@@ -26,6 +30,10 @@ for epoch in range(epoch_num):
 			print('[%d/%d] [%d/%d] err_train : %.4f, err_val : %.4f, IOU_val : %.4f'
 				  %(epoch+1, epoch_num, i+1, len(trn_dl), float(err_train), float(err_val), float(metric_val)))
 			trainer.network.train()
+
+			writer.add_scalar('Loss/err_train/', float(err_train), epoch+1)
+			writer.add_scalar('Loss/err_val/', float(err_val), epoch+1)
+			writer.add_scalar('Accuracy/IOU_val', float(metric_val), epoch+1)
 
 		if(i % opt.vis_freq == 0):
 			sample_images_list = get_sample_images_list(trainer, val_dl, n_classes)
